@@ -7,7 +7,7 @@ WORD_LIST = ["PYTHON","DEVELOPER","GITHUB", "TERMINAL"]
 class HangmanGUI:
     def __init__(self, root):
         self.root = root
-        self.root.title(" Python Hangman")
+        self.root.title("Hangman game")
         self.root.geometry("800x650")
         self.root.configure(bg="#2C3E50")
 
@@ -52,6 +52,7 @@ class HangmanGUI:
         self.keyboard_frame.pack(pady = 15)
 
         self.create_keyboard()
+        self.draw_hangman()
 
 
     def get_display_word(self):
@@ -81,6 +82,46 @@ class HangmanGUI:
                 command = lambda l=letter: self.guess_letter(l)
             )
             btn.grid(row=row, column = col, padx=4, pady=4)
+    def draw_hangman(self):
+        """Draws the hangman parts based on wrong attempts."""
+        self.canvas.delete("all")# clears canvas old shapes and new shapes mixing together
+
+        # colors for diagrams(wooden gallows and the rope)
+        wood_color = "#E67E22"
+        rope_color = "#f1c40f"
+        skin_color = "#ecf0f1"
+
+        #Diagram of the gallows = self.canvas.create_line (x1,y1,x2,y2,...)
+        self.canvas.create_line(20,180,100,180, fill=wood_color, width=4)#Base
+        self.canvas.create_line(60,180,60,20, fill=wood_color, width=4)#Post
+        self.canvas.create_line(60,20,160,20, fill=wood_color,width=4)#Beam
+        self.canvas.create_line(160,20,160,50, fill=rope_color, width=3)#Rope
+
+        #Drawing stick figure step-by-step based on wrong attempts
+        if self.wrong_attempts >=1:
+            #1. Head(creates oval)
+            self.canvas.create_oval(145,50,175,80, outline=skin_color, width=3)
+
+        if self.wrong_attempts >=2:
+            #2. Body(Line from neck to hips)
+            self.canvas.create_line(160,80,160,130, fill=skin_color, width=3)
+
+        if self.wrong_attempts >=3:
+            #3. Left arm(diagonal line)
+            self.canvas.create_line(160,95,140,115, fill=skin_color, width=3)
+        
+        if self.wrong_attempts >=4:
+            #4. right arm
+            self.canvas.create_line(160,95,180,115, fill=skin_color, width=3)
+
+        if self.wrong_attempts >=5:
+            #5. Left leg
+            self.canvas.create_line(160,130,140,165, fill=skin_color, width=3)
+
+        if self.wrong_attempts >=6:
+            #6. Right leg
+            self.canvas.create_line(160,130,180,165, fill=skin_color, width=3)
+
 
     def guess_letter(self, letter):
         """Processes a player's letter guess."""
@@ -91,8 +132,27 @@ class HangmanGUI:
             if child.cget("text") == letter:
                 child.config(state="disabled", bg="#7f8c8d")
 
-        #Update the underscore display
+        if letter in self.word:
+            self.word_label.config(text=self.get_display_word())
+            if "_" not in self.get_display_word():
+                messagebox.showinfo("Victory!", f"You won! The word was {self.word}")
+        else:
+            self.wrong_attempts +=1
+            self.draw_hangman()
+
+            if self.wrong_attempts >= self.max_attempts:
+                messagebox.showerror("Game Over", f"You ran out of attempts! The word was {self.word}")
+                self.reset_game()
+            
+
+    def reset_game(self):
+        """Resets the state to start a new game."""
+        self.word = random.choice(WORD_LIST).upper()
+        self.guessed_letters.clear()
+        self.wrong_attempts = 0
         self.word_label.config(text=self.get_display_word())
+        self.create_keyboard()
+        self.draw_hangman()
 
         
 if __name__ == "__main__":
