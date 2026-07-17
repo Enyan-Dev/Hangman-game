@@ -1,8 +1,28 @@
 import tkinter as tk
 from tkinter import messagebox
 import random
+import os
 
-WORD_LIST = ["PYTHON","DEVELOPER","GITHUB", "TERMINAL"]
+def load_words():
+    """Reads words from words.txt"""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    file_path = os.path.join(script_dir, "words.txt")
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r") as file:
+            #Reads lines, strip out hidden spaces and skip empty lines, if any
+                words = [line.strip().upper() for line in file if line.strip()]
+                return words
+        except Exception:
+            print("Text file missing or corrupt")
+            return []
+    else:
+        print(f"Looking for file at: {file_path} - But it was not found")
+        return [] 
+
+WORD_LIST = load_words()
+
+
 
 class HangmanGUI:
     def __init__(self, root):
@@ -12,10 +32,14 @@ class HangmanGUI:
         self.root.configure(bg="#2C3E50")
 
         #Game state variables
-        self.word = random.choice(WORD_LIST).upper()
         self.guessed_letters = set()
         self.max_attempts = 6
         self.wrong_attempts = 0
+
+        if WORD_LIST:
+            self.word = random.choice(WORD_LIST)
+        else:
+            self.word = "DEFAULT"
 
         #Title Label
         self.title_label = tk.Label(
@@ -136,6 +160,7 @@ class HangmanGUI:
             self.word_label.config(text=self.get_display_word())
             if "_" not in self.get_display_word():
                 messagebox.showinfo("Victory!", f"You won! The word was {self.word}")
+                self.reset_game()
         else:
             self.wrong_attempts +=1
             self.draw_hangman()
@@ -147,9 +172,12 @@ class HangmanGUI:
 
     def reset_game(self):
         """Resets the state to start a new game."""
-        self.word = random.choice(WORD_LIST).upper()
-        self.guessed_letters.clear()
+        self.guessed_letters = set()
         self.wrong_attempts = 0
+        if WORD_LIST:
+            self.word = random.choice(WORD_LIST).upper()
+        else:
+            self.word = "DEFAULT"
         self.word_label.config(text=self.get_display_word())
         self.create_keyboard()
         self.draw_hangman()
